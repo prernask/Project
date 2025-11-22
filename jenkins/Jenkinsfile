@@ -2,7 +2,7 @@ pipeline {
   agent any
   environment {
     DOCKERHUB_CRED = credentials('dockerhub-credentials')
-    ANSIBLE_HOST = 'ec2-user@ansible'
+   // ANSIBLE_HOST = 'ec2-user@ansible'
   }
   stages {
     stage('Checkout') {
