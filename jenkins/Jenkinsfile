@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git url: 'https://github.com/your-user/devops-eks-full.git', branch: 'main'
+        git url: 'https://github.com/prernask/Project.git', branch: 'main'
       }
     }
     stage('Build Frontend') {
