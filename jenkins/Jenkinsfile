@@ -2,7 +2,7 @@ pipeline {
   agent any
   environment {
     DOCKERHUB_CRED = credentials('dockerhub-credentials')
-    ANSIBLE_HOST = 'ubuntu@ansible'
+    ANSIBLE_HOST = 'ec2-user@ansible'
   }
   stages {
     stage('Checkout') {
@@ -35,10 +35,10 @@ pipeline {
         }
       }
     }
-    stage('Deploy via Ansible') {
+ /*   stage('Deploy via Ansible') {
       steps {
         sh 'ssh -o StrictHostKeyChecking=no ${ANSIBLE_HOST} "export FRONTEND_IMAGE=yourhub/frontend:${BUILD_NUMBER} && export BACKEND_IMAGE=yourhub/backend:${BUILD_NUMBER} && export BUILD_NUMBER=${BUILD_NUMBER} && cd /opt/ansible_repo || git clone https://github.com/your-user/devops-eks-full.git /opt/ansible_repo && cd /opt/ansible_repo/ansible && ansible-playbook -i inventory.ini deploy.yaml"'
       }
-    }
+    } */
   }
 }
