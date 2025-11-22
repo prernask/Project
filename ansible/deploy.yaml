@@ -1,0 +1,53 @@
+- hosts: k8s
+  become: yes
+  vars:
+    frontend_image: "{{ lookup('env','FRONTEND_IMAGE') | default('yourhub/frontend:latest') }}"
+    backend_image: "{{ lookup('env','BACKEND_IMAGE') | default('yourhub/backend:latest') }}"
+    build_number: "{{ lookup('env','BUILD_NUMBER') | default('local') }}"
+  tasks:
+    - name: Create deploy dir
+      file:
+        path: /opt/deploy
+        state: directory
+        owner: ubuntu
+        mode: '0755'
+
+    - name: Template frontend deployment
+      template:
+        src: ../k8s/frontend-deployment.yaml.j2
+        dest: /opt/deploy/frontend-deployment.yaml
+      vars:
+        frontend_image: "{{ frontend_image }}"
+
+    - name: Copy frontend service
+      copy:
+        src: ../k8s/frontend-service.yaml
+        dest: /opt/deploy/frontend-service.yaml
+
+    - name: Template backend deployment
+      template:
+        src: ../k8s/backend-deployment.yaml.j2
+        dest: /opt/deploy/backend-deployment.yaml
+      vars:
+        backend_image: "{{ backend_image }}"
+        build_number: "{{ build_number }}"
+
+    - name: Copy backend service
+      copy:
+        src: ../k8s/backend-service.yaml
+        dest: /opt/deploy/backend-service.yaml
+
+    - name: Copy ingress
+      copy:
+        src: ../k8s/ingress.yaml
+        dest: /opt/deploy/ingress.yaml
+
+    - name: Copy backend HPA
+      copy:
+        src: ../k8s/backend-hpa.yaml
+        dest: /opt/deploy/backend-hpa.yaml
+
+    - name: Apply manifests
+      command: kubectl apply -f /opt/deploy/
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config

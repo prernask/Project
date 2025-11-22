@@ -1,0 +1,44 @@
+pipeline {
+  agent any
+  environment {
+    DOCKERHUB_CRED = credentials('dockerhub-credentials')
+    ANSIBLE_HOST = 'ubuntu@ansible'
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/your-user/devops-eks-full.git', branch: 'main'
+      }
+    }
+    stage('Build Frontend') {
+      steps {
+        dir('frontend') {
+          sh 'npm install'
+          sh 'npm run build'
+          sh 'docker build -t yourhub/frontend:${BUILD_NUMBER} .'
+        }
+      }
+    }
+    stage('Build Backend') {
+      steps {
+        dir('backend') {
+          sh 'docker build -t yourhub/backend:${BUILD_NUMBER} .'
+        }
+      }
+    }
+    stage('Push Images') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+          sh 'docker push yourhub/frontend:${BUILD_NUMBER}'
+          sh 'docker push yourhub/backend:${BUILD_NUMBER}'
+        }
+      }
+    }
+    stage('Deploy via Ansible') {
+      steps {
+        sh 'ssh -o StrictHostKeyChecking=no ${ANSIBLE_HOST} "export FRONTEND_IMAGE=yourhub/frontend:${BUILD_NUMBER} && export BACKEND_IMAGE=yourhub/backend:${BUILD_NUMBER} && export BUILD_NUMBER=${BUILD_NUMBER} && cd /opt/ansible_repo || git clone https://github.com/your-user/devops-eks-full.git /opt/ansible_repo && cd /opt/ansible_repo/ansible && ansible-playbook -i inventory.ini deploy.yaml"'
+      }
+    }
+  }
+}
